@@ -6,7 +6,9 @@ import 'package:flutter_app_1/Views/Prescription_view.dart';
 import 'package:flutter_app_1/Views/Sign_up.dart';
 //import 'package:flutter_app/views/View_random.dart';
 import 'package:flutter_app_1/Views/Forget_password.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 
 
@@ -42,6 +44,8 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool toggleValue = false;
+  bool _isLoading = false;
+
   //CounterViewModel _viewModel;
 
   @override
@@ -60,9 +64,13 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   String _email;
   String _password;
 
-  void backbutton() {
+  /*void backbutton() {
     Navigator.pop(context);
-  }
+  }*/
+
+  final TextEditingController emailController = new TextEditingController();
+  final TextEditingController passwordController = new TextEditingController();
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +88,8 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
           backgroundColor: Color.fromRGBO(236, 85, 156, 1)
       ),
       body: SingleChildScrollView(
-        child: Column(
+        child: //_isLoading ? Center(child: CircularProgressIndicator()) :
+         Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               /* Container(
@@ -106,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                             TextFormField(
                               style:
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
+                              controller: emailController,
                               decoration: InputDecoration(
                                 //contentPadding: EdgeInsets.all(30),
                                   labelText: 'Email *',
@@ -136,8 +146,8 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
                               style:
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
+                              controller: passwordController,
                               decoration: InputDecoration(
-
                                 //contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
                                 labelText: 'Password *',
                                 labelStyle: TextStyle(
@@ -253,14 +263,17 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                         if(!_formKey.currentState.validate()){
                           return;
                         }
-                        else {
+                      /*  else {
                           Navigator.push(context, MaterialPageRoute(
                               builder: (context) {
                                 return Landingscreen();
                               }));
-                        }
+                        }*/
                         _formKey.currentState.save();
-
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        SignIn(emailController.text, passwordController.text);
                         //this.widget.presenter.onButton1Clicked();
                         //Navigator.push(context, MaterialPageRoute(builder: (context) {
                         //return pass();
@@ -279,7 +292,9 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                   ),
                 ),
               ),
-
+              SizedBox(height: 10),
+              if(_isLoading == true)
+                Center(child: CircularProgressIndicator()),
               SizedBox(height:75.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -334,6 +349,54 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
             child: new Icon(Icons.add),
           ),*/
     );
+  }
+
+  SignIn(String email, pass) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    var jsonResponse = null;
+    var response = await http.post("https://reqres.in/api/login", body: {
+      'email': email,
+      'password': pass
+    }
+    );
+    if(response.statusCode == 200) {
+      jsonResponse = json.decode(response.body);
+      if(jsonResponse != null) {
+        setState(() {
+          _isLoading = false;
+        });
+        sharedPreferences.setString("token", jsonResponse['token']);
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => Landingscreen()), (Route<dynamic> route) => false);
+      }
+    }
+    else {
+      return showDialog(
+        context: context,
+        builder: (context) => new AlertDialog(
+          title: new Text('Error'),
+          content: new Text("User doesn't found?"),
+          actions: <Widget>[
+            new FlatButton(
+              child: Text("ok"),
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return MyAp();
+                }
+                ));
+              }
+            ),
+          ],
+        ),
+      );
+
+
+
+      /*setState(() {
+        _isLoading = false;
+      });*/
+      print(response.body);
+    }
   }
 
   togglebutton() {

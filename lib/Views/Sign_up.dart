@@ -1,18 +1,43 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-//import 'package:flutter_app/viewmodel/Login_model.dart';
-//import 'package:http/http.dart' as http;
+import 'package:flutter_app_1/Model/Login_model.dart';
+import 'package:http/http.dart' as http;
 
 class SignupPage extends StatefulWidget {
   @override
   _SignupPageState createState() => _SignupPageState();
 }
 
+
+
+Future<UserModel> createUser(String name, String jobTitle) async{
+  final String apiUrl = "https://reqres.in/api/users";
+
+  final response = await http.post(apiUrl,
+      /*headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },*/
+      body: {
+    "name": name,
+    "job": jobTitle
+  });
+
+  if(response.statusCode == 201){
+    final String responseString = response.body;
+
+    return userModelFromJson(responseString);
+  }else{
+    throw Exception('Failed to register');
+  }
+}
+
+
+
 class _SignupPageState extends State<SignupPage> {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  //UserModel _user;
+  UserModel _user;
 
   String _email;
   String _password;
@@ -20,31 +45,14 @@ class _SignupPageState extends State<SignupPage> {
   void backbutton() {
     Navigator.pop(context);
   }
-/*
-  Future<UserModel> createUser(String name, String jobTitle) async{
-    final String apiUrl = "https://reqres.in/api/users";
 
-    final response = await http.post(apiUrl, body: {
-      "name": name,
-      "job": jobTitle
-    });
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
-    if(response.statusCode == 201){
-      final String responseString = response.body;
 
-      return userModelFromJson(responseString);
-    }else{
-      return null;
-    }
-  }
-*/
 
   @override
   Widget build(BuildContext context) {
-
-    //  final TextEditingController emailController = TextEditingController();
-    //  final TextEditingController passwordController = TextEditingController();
-
 
     return new/* WillPopScope(
         onWillPop: (){
@@ -68,9 +76,10 @@ class _SignupPageState extends State<SignupPage> {
                       child: Column(
                           children: <Widget>[
                             TextFormField(
+                              //controller: emailController,
                               style:
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
-                              //controller: emailController,
+                              controller: emailController,
                               decoration: InputDecoration(
                                   labelText: 'Email *',
                                   labelStyle: TextStyle(
@@ -87,9 +96,10 @@ class _SignupPageState extends State<SignupPage> {
                             ),
                             SizedBox(height: 10.0),
                             TextFormField(
+                              //controller: passwordController,
                               style:
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
-                              //controller: passwordController,
+                              controller: passwordController,
                               decoration: InputDecoration(
                                   labelText: 'Password *',
                                   labelStyle: TextStyle(
@@ -117,19 +127,21 @@ class _SignupPageState extends State<SignupPage> {
                                       color: Color.fromRGBO(97, 97, 97, 1)
                                   )
                               ),
-                              validator: (val)  =>
-                              val !=  _password  ? 'it should match with Password' :null,
-                              onSaved: (val) => _password=val,
+                              validator: (val) {
+                            if(val != passwordController.text)
+                              return 'it should match with Password';
+                            return null;
+                              },
                               obscureText: true,
                             ),
                           ]
                       )
                   ),
                 ),
-                // SizedBox(height: 32,),
+                 SizedBox(height: 32),
 
-                //    _user == null ? Container() :
-                //  Text("The user ${_user.email}, ${_user.id} is created successfully at time ${_user.createdAt.toIso8601String()}"),
+                  _user == null ? Container() :
+                  Text("The user ${_user.name}, ${_user.id} is created successfully at time ${_user.createdAt.toIso8601String()}"),
 
 
                 SizedBox(height: 40.0),
@@ -147,12 +159,16 @@ class _SignupPageState extends State<SignupPage> {
                           return;
                         }
                         _formKey.currentState.save();
-/*
-                final String name = emailController.text;
-                final String jobTitle = passwordController.text;
 
-                final UserModel user = await createUser(name, jobTitle);
-*/
+                final String name = emailController.text;
+                final String password = passwordController.text;
+
+                final UserModel user = await createUser(name, password);
+
+                setState(() {
+                  _user = user;
+                });
+
 
                         //Navigator.push(context, MaterialPageRoute(builder: (context) {
                         //return pass();

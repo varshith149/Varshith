@@ -22,12 +22,17 @@ class MyApp extends StatelessWidget {
 */
 
 //multi_image_picker: ^3.0.14
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_1/Views/Login_view.dart';
+import 'package:flutter_app_1/Views/Prescription_view.dart';
 import 'package:splashscreen/splashscreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 //import 'package:flutter_app/views/Login_view.dart';
 //import 'dart:async';
+import 'package:device_id/device_id.dart';
+
 
 void main() => runApp(new MyApp());
 
@@ -43,6 +48,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -86,8 +93,47 @@ class _MyHomePageState extends State<MyHomePage> {
        false;
  }*/
 
+bool togg;
+
+@override
+void initState() {
+  super.initState();
+  Rememberme(togg);
+}
+
+String deviceID;
+
+void getDeviceID() async {
+  String deviceId = await DeviceId.getID;
+  deviceID = '$deviceId';
+  print('Device ID is $deviceId');
+}
+
+
+Rememberme(bool togg) async {
+  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+  final bool toggleValue = sharedPreferences.getBool('Islogin');
+  print("toggle value from main dart");
+  print(toggleValue);
+  setState(() {
+    togg = toggleValue;
+  });
+  print(togg);
+}
+
+device() async {
+  SharedPreferences shared = await SharedPreferences.getInstance();
+  shared.setString("device", deviceID);
+}
+
+
+
+
   @override
   Widget build(BuildContext context) {
+    getDeviceID();
+    device();
     return WillPopScope(
       onWillPop: ()async{
         return Navigator.canPop(context);
@@ -99,7 +145,8 @@ class _MyHomePageState extends State<MyHomePage> {
         image: Image.asset('Images/Logo_easymedico.png'),
         loaderColor: Colors.white,
         photoSize: 150,
-        navigateAfterSeconds: MyAp(),
+        navigateAfterSeconds:
+        togg == true ? Landingscreen() : MyAp(),
 
         loadingText: Text('Your Health Our Care..!',
           style: TextStyle(
@@ -111,6 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     );
   }}
+
 
 
 // Akkarleni Sodhi

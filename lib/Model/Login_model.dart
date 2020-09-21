@@ -15,30 +15,36 @@ UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
 String userModelToJson(UserModel data) => json.encode(data.toJson());
 
 class UserModel {
-  String name;
+  String email;
   String password;
-  String id;
-  DateTime createdAt;
+  double Latitude;
+  double Longitude;
+  String Address;
 
   UserModel({
-    this.name,
+    this.email,
     this.password,
-    this.id,
-    this.createdAt,
+    this.Latitude,
+    this.Longitude,
+    this.Address
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-    name: json["name"],
+    email: json["email"],
     password: json["password"],
-    id: json["id"],
-    createdAt: DateTime.parse(json["createdAt"]),
+    Latitude: json["Latitude"],
+    Longitude: json["Longitude"],
+    Address:  json["Address"],
+    //createdAt: DateTime.parse(json["createdAt"]),
   );
 
   Map<String, dynamic> toJson() => {
-    "name": name,
+    "email": email,
     "password": password,
-    "id": id,
-    "createdAt": createdAt.toIso8601String(),
+    "Latitude": Latitude,
+    "Longitude" : Longitude,
+    "Address" : Address
+    //"createdAt": createdAt.toIso8601String(),
   };
 }
 

@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_1/Model/Login_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+import 'dart:convert';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -10,17 +12,25 @@ class SignupPage extends StatefulWidget {
 
 
 
-Future<UserModel> createUser(String name, String jobTitle) async{
+Future<UserModel> createUser(String email, String password) async{
+                            //double Latitude,double Longitude,String Address
   final String apiUrl = "https://reqres.in/api/users";
 
+  Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
+  final msg = jsonEncode({"email":email,"password":password});
+
   final response = await http.post(apiUrl,
-      /*headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },*/
-      body: {
-    "name": name,
-    "job": jobTitle
-  });
+      headers: headers,// <String, String>{
+        //'Content-Type': 'application/json, charset=UTF-8'
+      //},
+      body: msg,/*{
+        "email": email,
+        "password": password,
+        //"Latitude": Latitude,
+        //"Longitude" : Longitude,
+        //"Address" : Address
+
+  }*/);
 
   if(response.statusCode == 201){
     final String responseString = response.body;
@@ -36,14 +46,19 @@ Future<UserModel> createUser(String name, String jobTitle) async{
 class _SignupPageState extends State<SignupPage> {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
 
   UserModel _user;
 
   String _email;
   String _password;
+  Position _currentPosition;
+  String _currentAddress;
 
-  void backbutton() {
-    Navigator.pop(context);
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
   }
 
   final TextEditingController emailController = TextEditingController();
@@ -141,7 +156,7 @@ class _SignupPageState extends State<SignupPage> {
                  SizedBox(height: 32),
 
                   _user == null ? Container() :
-                  Text("The user ${_user.name}, ${_user.id} is created successfully at time ${_user.createdAt.toIso8601String()}"),
+                  Text("The user ${_user.email},is created successfully"),
 
 
                 SizedBox(height: 40.0),
@@ -160,10 +175,11 @@ class _SignupPageState extends State<SignupPage> {
                         }
                         _formKey.currentState.save();
 
-                final String name = emailController.text;
+                final String email = emailController.text;
                 final String password = passwordController.text;
 
-                final UserModel user = await createUser(name, password);
+                final UserModel user = await createUser(email, password);//_currentPosition.latitude,
+                                                        //_currentPosition.longitude,_currentAddress);
 
                 setState(() {
                   _user = user;
@@ -198,5 +214,36 @@ class _SignupPageState extends State<SignupPage> {
 
   }
 
+  _getCurrentLocation() {
+    geolocator
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+        .then((Position position) {
+      setState(() {
+        _currentPosition = position;
+      });
+
+      _getAddressFromLatLng();
+    }).catchError((e) {
+      print(e);
+    });
+  }
+
+  _getAddressFromLatLng() async {
+    try {
+      List<Placemark> p = await geolocator.placemarkFromCoordinates(
+          _currentPosition.latitude, _currentPosition.longitude);
+
+      Placemark place = p[0];
+
+      setState(() {
+        _currentAddress =
+        "${place.locality}, ${place.postalCode}, ${place.country}";
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
 }
+
+
 

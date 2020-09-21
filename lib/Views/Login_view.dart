@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app_1/Views/Static.dart';
 //import 'package:flutter_app/presenter/Medical_presenter.dart';
 //import 'package:flutter_app/viewmodel/Login_model.dart';
 import 'package:flutter_app_1/Views/Prescription_view.dart';
@@ -9,7 +11,9 @@ import 'package:flutter_app_1/Views/Forget_password.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:connectivity/connectivity.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter_app_1/main.dart';
 
 
 class MyAp extends StatelessWidget {
@@ -42,17 +46,56 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   //GlobalKey<NavigatorState> _key = GlobalKey();
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    final GlobalKey<State> _keyLoader = new GlobalKey<State>();
+  final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
 
+  String _email;
+  String _password;
+  Position _currentPosition;
+   String _currentAddress;
+
+
+
+  String deviceID;
+  String result = '';
   bool toggleValue = false;
   bool _isLoading = false;
 
   //CounterViewModel _viewModel;
 
+  var _connectionStatus = 'Unknown';
+  Connectivity connectivity;
+  StreamSubscription<ConnectivityResult> subscription;
+
   @override
   void initState() {
     super.initState();
+    connectivity = new Connectivity();
+    subscription =
+            connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+      _connectionStatus = result.toString();
+        
+      print(_connectionStatus);
+      if (result == ConnectivityResult.wifi ||
+          result == ConnectivityResult.mobile) {
+        checkstatus(_connectionStatus);
+        _getCurrentLocation();
+
+      }
+    else
+      {
+          checkstatus(_connectionStatus);
+      }
+    });
     //this.widget.presenter.counterView = this as CounterView;
   }
+
+  @override
+    void dispose() {
+      subscription.cancel();
+      super.dispose();
+    }
+
 
  /* @override
   void refreshCounter(CounterViewModel viewModel) {
@@ -61,12 +104,6 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
     });
   }*/
 
-  String _email;
-  String _password;
-
-  /*void backbutton() {
-    Navigator.pop(context);
-  }*/
 
   final TextEditingController emailController = new TextEditingController();
   final TextEditingController passwordController = new TextEditingController();
@@ -74,6 +111,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
   @override
   Widget build(BuildContext context) {
+    device();
     return /*WillPopScope(
       onWillPop: (){
         backbutton();
@@ -110,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                   padding: EdgeInsets.fromLTRB(15, 60, 15,0 ),
                   child: Form(
                       key: _formKey,
+
                       child: Column(
                           children: <Widget>[
                             TextFormField(
@@ -273,7 +312,13 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                         setState(() {
                           _isLoading = true;
                         });
-                        SignIn(emailController.text, passwordController.text);
+                        //  circle();
+                        result == 'ConnectivityResult.none' ? internet.showLoadingDialog(context, _keyLoader) :
+                        SignIn(emailController.text, passwordController.text,/*_currentPosition.latitude,_currentPosition.longitude,_currentAddress*/);
+                        print(_currentPosition);
+                        //print(_currentPosition.longitude);
+                        print(_currentAddress);
+                        print('$deviceID');
                         //this.widget.presenter.onButton1Clicked();
                         //Navigator.push(context, MaterialPageRoute(builder: (context) {
                         //return pass();
@@ -292,9 +337,10 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                   ),
                 ),
               ),
-              SizedBox(height: 10),
-              if(_isLoading == true)
-                Center(child: CircularProgressIndicator()),
+             // SizedBox(height: 10),
+              //if(_isLoading == true)
+                //circle(),
+                // Center(child: CircularProgressIndicator()),
               SizedBox(height:75.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -351,26 +397,52 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
     );
   }
 
-  SignIn(String email, pass) async {
+
+  Future<void> device() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    final String deviceID = shared.getString('device');
+    //print(deviceID);
+  }
+
+
+
+
+    Future<void> SignIn( email, pass,/*Latitude,Longitude,Address*/) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
+    Dialogs.showLoadingDialog(context, _keyLoader);
+
+    Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
+    final msg = jsonEncode({"email":email,"password":pass});
+
     var jsonResponse = null;
-    var response = await http.post("https://reqres.in/api/login", body: {
+    var response = await http.post("https://reqres.in/api/login",
+      headers: headers,
+      body:msg,/* {
       'email': email,
-      'password': pass
-    }
+      'password': pass,
+      /*'latitude': Latitude,
+      'longitude': Longitude,
+      'Address' : Address*/
+    }*/
     );
+
     if(response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
       if(jsonResponse != null) {
         setState(() {
           _isLoading = false;
         });
-        sharedPreferences.setString("token", jsonResponse['token']);
+
+        sharedPreferences.setBool("Islogin", toggleValue);
+        print("Toggle button from login view");
+        print(toggleValue) ;
+        Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
         Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => Landingscreen()), (Route<dynamic> route) => false);
       }
     }
     else {
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
       return showDialog(
         context: context,
         builder: (context) => new AlertDialog(
@@ -378,19 +450,14 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
           content: new Text("User doesn't found?"),
           actions: <Widget>[
             new FlatButton(
-              child: Text("ok"),
+              child: Text("ok",style: TextStyle(fontSize: 20)),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return MyAp();
-                }
-                ));
+                Navigator.pop(context);
               }
             ),
           ],
         ),
       );
-
-
 
       /*setState(() {
         _isLoading = false;
@@ -399,9 +466,76 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
     }
   }
 
-  togglebutton() {
+/*    circle() async {
+     if(_isLoading == true)
+      return showDialog(
+      context: context,
+      builder: (context) => new AlertDialog(
+        backgroundColor: Colors.black,
+        actions: <Widget>[
+
+        Center(heightFactor: 2,child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: <Widget>[
+          CircularProgressIndicator(),
+          Text('worst maxxxxxxx',style: TextStyle(color: Colors.black),)
+        ])),
+      ],
+      ),
+        );
+  }                      */
+
+Future<void> Network_error(BuildContext context)  {
+
+      internet.showLoadingDialog(context, _keyLoader);
+
+}
+
+
+
+togglebutton() {
     setState(() {
       toggleValue = !toggleValue;
     });
   }
+
+  void checkstatus(String resultval) {
+      setState(() {
+        result = resultval;
+      });
+    }
+
+
+  _getCurrentLocation() {
+    geolocator
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+        .then((Position position) {
+      setState(() {
+        _currentPosition = position;
+      });
+
+      _getAddressFromLatLng();
+    }).catchError((e) {
+      print(e);
+    });
+  }
+
+  _getAddressFromLatLng() async {
+    try {
+      List<Placemark> p = await geolocator.placemarkFromCoordinates(
+          _currentPosition.latitude, _currentPosition.longitude);
+
+      Placemark place = p[0];
+
+      setState(() {
+        _currentAddress =
+        "${place.locality}, ${place.postalCode}, ${place.country}";
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
+
+
 }

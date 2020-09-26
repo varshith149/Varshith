@@ -14,6 +14,7 @@ import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_app_1/main.dart';
+import 'package:flutter_app_1/util/constant.dart';
 
 
 class MyAp extends StatelessWidget {
@@ -42,9 +43,10 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => new _MyHomePageState();
 }
 
+
 class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   //GlobalKey<NavigatorState> _key = GlobalKey();
-  final scaffoldKey = new GlobalKey<ScaffoldState>();
+ // final scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
     final GlobalKey<State> _keyLoader = new GlobalKey<State>();
   final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
@@ -97,29 +99,50 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
     }
 
 
- /* @override
-  void refreshCounter(CounterViewModel viewModel) {
-    setState(() {
-      this._viewModel = viewModel;
-    });
-  }*/
-
 
   final TextEditingController emailController = new TextEditingController();
   final TextEditingController passwordController = new TextEditingController();
+
+  Future<bool> _onBackPressed() {
+    if (_email != null) {
+      return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>
+        new AlertDialog(
+          title: new Text('Are you sure?'),
+          content: new Text('Do you want to exit an App'),
+          actions: <Widget>[
+            new GestureDetector(
+              onTap: () => Navigator.of(context).pop(false),
+              child: Text("NO"),
+            ),
+            SizedBox(height: 16),
+            new GestureDetector(
+              onTap: () => Navigator.of(context).pop(true),
+              child: Text("YES"),
+            ),
+          ],
+        ),
+      ) ??
+          false;
+    }
+  }
 
 
   @override
   Widget build(BuildContext context) {
     device();
     return /*WillPopScope(
-      onWillPop: (){
-        backbutton();
+      onWillPop: _onBackPressed, //_onBackPressed,//()  {
+        //return _onBackPressed();
+        //Navigator.pop(context,true);
+        //return false;
         //return Future.value(false);
-      },
+      //},
       child: */new Scaffold(
       appBar: AppBar(
-          title: Text('Sign In',//widget.title,
+          title: Text(APPBAR_SIGNIN,//widget.title,
               style: TextStyle(fontSize: 25)
           ),
           centerTitle: true,
@@ -157,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                               controller: emailController,
                               decoration: InputDecoration(
                                 //contentPadding: EdgeInsets.all(30),
-                                  labelText: 'Email *',
+                                  labelText: EMAIL,
                                   labelStyle: TextStyle(
                                       fontFamily:'Montserrat',
                                       fontSize: 22,
@@ -170,14 +193,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                                   )
                               ),
                               validator: (String val) =>
-                              /*  if(val.isEmpty){
-                          return 'Invalid Email';
-                        }
-                       },
-                       onSaved: (String val){
-                        _email = val;
-                       },*/
-                              !val.contains('@') ? 'Invalid Email' :null,
+                              !val.contains('@') ? EMAIL_ERROR :null,
                               onSaved: (val) => _email=val,
                             ),
                             SizedBox(height: 10.0),
@@ -188,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                               controller: passwordController,
                               decoration: InputDecoration(
                                 //contentPadding: EdgeInsets.fromLTRB(0, 0, 0, 0),
-                                labelText: 'Password *',
+                                labelText: PASSWORD,
                                 labelStyle: TextStyle(
                                     fontFamily:'Montserrat',
                                     fontSize: 22,
@@ -198,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
                               ),
                               validator: (val)  =>
-                              val.length<6 ? 'Password too short' :null,
+                              val.length<6 ? PASSWORD_ERROR :null,
                               onSaved: (val) => _password=val,
                               obscureText: true,
                             ),
@@ -209,14 +225,11 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                                 alignment: Alignment(1.0,0.0),
                                 child: InkWell(
                                   onTap: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) {
-                                      return resetPage();
-                                    }));
-                                    //of(context).pushNamed('/password_reset');
-                                    //this.widget.presenter.onButton1Clicked();
+                                    Navigator.push(context,
+                                    BouncyPageRoute(widget: resetPage()));
                                   },
                                   child: Text(
-                                    'Forgot Password',
+                                    FORGET_PASSWORD,
                                     style: TextStyle(
                                       fontFamily:'Montserrat',
                                       fontWeight: FontWeight.bold,
@@ -229,7 +242,8 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                             ),
 
                           ]
-                      )
+                      ),
+                      onWillPop: _onBackPressed,
                   )
               ),
 
@@ -239,7 +253,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                   children :<Widget>[
                     SizedBox(width: 10),
                     Text(
-                      'Remember Me ',
+                      REMEMBER_ME,
                       style: TextStyle(fontFamily: 'Montserrat',fontSize: 20),
 
                     ),
@@ -302,12 +316,6 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                         if(!_formKey.currentState.validate()){
                           return;
                         }
-                      /*  else {
-                          Navigator.push(context, MaterialPageRoute(
-                              builder: (context) {
-                                return Landingscreen();
-                              }));
-                        }*/
                         _formKey.currentState.save();
                         setState(() {
                           _isLoading = true;
@@ -325,7 +333,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                       },
                       child: Center(
                         child: Text(
-                          'Login',
+                          LOGIN_BUTTON,
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 25,
@@ -346,20 +354,21 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    "Don't have account?",
+                    DONT_HAVE_ACCOUNT,
                     style: TextStyle(fontFamily: 'Montserrat',fontSize: 20),
                   ),
                   SizedBox(width: 5.0),
                   InkWell(
-                    onTap: () {
-                      //this.widget.presenter.onButton1Clicked();
-                      Navigator.push(context, MaterialPageRoute(builder: (context) {
-                        return SignupPage();
-                      }
-                      ));
+                    onTap: ()  {
+                      Navigator.push(
+                          context,BouncyPageRoute(widget: SignupPage())
+                          //MaterialPageRoute(builder: (context) {
+                        //return SignupPage();
+                      //}
+                      );//);
                     },
                     child: Text(
-                      'Register',
+                      REGISTER,
                       style: TextStyle(
                           color: Color.fromRGBO(99, 99, 99, 1),
                           fontFamily: 'Montserrat',
@@ -407,24 +416,19 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
 
 
-    Future<void> SignIn( email, pass,/*Latitude,Longitude,Address*/) async {
+    Future<void> SignIn( email, pass,/*Latitude,Longitude,Address,device_id*/) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
 
     Dialogs.showLoadingDialog(context, _keyLoader);
 
     Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
     final msg = jsonEncode({"email":email,"password":pass});
+    //'latitude': Latitude,'longitude': Longitude,'Address' : Address,'device_id': device_id
 
     var jsonResponse = null;
     var response = await http.post("https://reqres.in/api/login",
       headers: headers,
-      body:msg,/* {
-      'email': email,
-      'password': pass,
-      /*'latitude': Latitude,
-      'longitude': Longitude,
-      'Address' : Address*/
-    }*/
+      body:msg,
     );
 
     if(response.statusCode == 200) {
@@ -434,30 +438,60 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
           _isLoading = false;
         });
 
-        sharedPreferences.setBool("Islogin", toggleValue);
+
+        sharedPreferences.setString('Device_ID', deviceID);
+
         print("Toggle button from login view");
         print(toggleValue) ;
         Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (BuildContext context) => Landingscreen()), (Route<dynamic> route) => false);
-      }
+     //   if(jsonResponse['RESPONSE_CODE']==200) {
+        sharedPreferences.setBool("Islogin", toggleValue);
+        sharedPreferences.setString('email', email);
+        sharedPreferences.setString('User_ID', jsonResponse['ID']);
+
+        Navigator.push(
+            context,BouncyPageRoute(widget: Landingscreen()));
+          /*Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
+              builder: (BuildContext context) => Landingscreen()), (
+              Route<dynamic> route) => false);*/
+          // }
+     /*    else if(jsonResponse['RESPONSE_CODE']==202){
+          return showDialog(
+            context: context,
+            builder: (context) => new AlertDialog(
+              content: new Text(jsonResponse['RESPONSE_MESSAGE']),
+              actions: <Widget>[
+                new FlatButton(
+                    child: Text("ok",style: TextStyle(fontSize: 20)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }
+                ),
+              ],
+            ),
+          );
+        }
+         else{
+          return showDialog(
+            context: context,
+            builder: (context) => new AlertDialog(
+              content: new Text(jsonResponse['RESPONSE_MESSAGE']),
+              actions: <Widget>[
+                new FlatButton(
+                    child: Text("ok",style: TextStyle(fontSize: 20)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    }
+                ),
+              ],
+            ),
+          );
+        }*/
+        }
     }
     else {
       Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-      return showDialog(
-        context: context,
-        builder: (context) => new AlertDialog(
-          title: new Text('Error'),
-          content: new Text("User doesn't found?"),
-          actions: <Widget>[
-            new FlatButton(
-              child: Text("ok",style: TextStyle(fontSize: 20)),
-              onPressed: () {
-                Navigator.pop(context);
-              }
-            ),
-          ],
-        ),
-      );
+      error_response_statuscode.showLoadingDialog(context, _keyLoader);
 
       /*setState(() {
         _isLoading = false;

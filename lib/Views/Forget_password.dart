@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_1/util/constant.dart';
 //import 'package:flutter_app/views/Login_view.dart';
 //import 'dart:async';
 
@@ -58,7 +59,7 @@ class _SignupPageState extends State<resetPage> {
       child:*/ new Scaffold(
         resizeToAvoidBottomPadding: false,
         appBar: AppBar(
-          title: Text('Forgot Password', style: TextStyle(fontSize: 25),),
+          title: Text(APPBAR_FORGET_PASSWORD, style: TextStyle(fontSize: 25),),
           centerTitle: true,
           backgroundColor: Color.fromRGBO(236, 85,156,1),
         ),
@@ -90,7 +91,7 @@ class _SignupPageState extends State<resetPage> {
                                 style:
                                 TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
                                 decoration: InputDecoration(
-                                    labelText: 'Email *',
+                                    labelText: EMAIL,
                                     labelStyle: TextStyle(
                                         fontFamily:'Montserrat',
                                         fontSize: 22,
@@ -103,7 +104,7 @@ class _SignupPageState extends State<resetPage> {
                                   //)
                                 ),
                                 validator: (String val) =>
-                                !val.contains('@') ? 'Invalid Email' :null,
+                                !val.contains('@') ? EMAIL_ERROR :null,
                                 onSaved: (val) => _email=val,
                               ),
                               SizedBox(height:55.0),
@@ -130,7 +131,7 @@ class _SignupPageState extends State<resetPage> {
                                       },
                                       child: Center(
                                         child: Text(
-                                          'Submit',
+                                          SUBMIT_BUTTON,
                                           style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 25,

@@ -94,6 +94,9 @@ class _MyHomePageState extends State<MyHomePage> {
  }*/
 
 bool togg;
+String deviceID;
+String User_loggedIn;
+
 
 @override
 void initState() {
@@ -101,7 +104,6 @@ void initState() {
   Rememberme(togg);
 }
 
-String deviceID;
 
 void getDeviceID() async {
   String deviceId = await DeviceId.getID;
@@ -120,11 +122,41 @@ Rememberme(bool togg) async {
     togg = toggleValue;
   });
   print(togg);
+
+  if (togg == true ) {
+    User_loggedIn = 'Prescription Screen';
+    }
+  else {
+    User_loggedIn = 'Sign In';
+    }
+
 }
 
 device() async {
   SharedPreferences shared = await SharedPreferences.getInstance();
   shared.setString("device", deviceID);
+}
+
+Future<bool> _onBackPressed() {
+  //Navigator.of(context).pop();
+  return showDialog(
+    context: context,
+    builder: (context) => new AlertDialog(
+      title: new Text('Are you sure?'),
+      content: new Text('Do you want to exit an App'),
+      actions: <Widget>[
+        new FlatButton(
+          child: Text("NO"),
+          onPressed: () => Navigator.pop(context,false),
+        ),
+        new FlatButton(
+          child: Text("Yes"),
+          onPressed: () => Navigator.pop(context,true),
+        ),
+      ],
+    ),
+  ) ??
+      false;
 }
 
 
@@ -134,28 +166,25 @@ device() async {
   Widget build(BuildContext context) {
     getDeviceID();
     device();
+    //Rememberme(togg);
     return WillPopScope(
-      onWillPop: ()async{
-        return Navigator.canPop(context);
-      },
+        onWillPop: _onBackPressed,
       child: SplashScreen(
-        seconds: 5,
-        backgroundColor: Colors.white,
+      seconds: 5,
+      backgroundColor: Colors.white,
 
-        image: Image.asset('Images/Logo_easymedico.png'),
-        loaderColor: Colors.white,
-        photoSize: 150,
-        navigateAfterSeconds:
-        togg == true ? Landingscreen() : MyAp(),
+      image: Image.asset('Images/Logo_easymedico.png'),
+      loaderColor: Colors.white,
+      photoSize: 150,
+       navigateAfterSeconds: User_loggedIn == 'Prescription Screen' ? Landingscreen() : MyAp(),
 
-        loadingText: Text('Your Health Our Care..!',
-          style: TextStyle(
-              fontSize: 30,
-              color: Colors.green
-          ),
+      loadingText: Text('Your Health Our Care..!',
+        style: TextStyle(
+            fontSize: 30,
+            color: Colors.green
         ),
       ),
-
+    )
     );
   }}
 

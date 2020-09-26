@@ -1,9 +1,19 @@
+import 'dart:async';
+import 'dart:core';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_1/Model/Login_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
+import 'package:flutter_app_1/util/constant.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter_app_1/Views/Static.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'Prescription_view.dart';
+
+
 
 class SignupPage extends StatefulWidget {
   @override
@@ -16,28 +26,74 @@ Future<UserModel> createUser(String email, String password) async{
                             //double Latitude,double Longitude,String Address
   final String apiUrl = "https://reqres.in/api/users";
 
-  Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
-  final msg = jsonEncode({"email":email,"password":password});
+  //Map<String,String> headers = {'Content-Type':'application/json','Authorization': Token};
+  final msg = jsonEncode({"email":email,"password":password
+                //"Latitude": Latitude,"Longitude" : Longitude,"Address" : Address
+  });
 
   final response = await http.post(apiUrl,
-      headers: headers,// <String, String>{
+    //  headers: headers,// <String, String>{
         //'Content-Type': 'application/json, charset=UTF-8'
       //},
       body: msg,/*{
         "email": email,
         "password": password,
         //"Latitude": Latitude,
-        //"Longitude" : Longitude,
+        //Longitude" : Longitude",
         //"Address" : Address
 
   }*/);
 
-  if(response.statusCode == 201){
-    final String responseString = response.body;
 
-    return userModelFromJson(responseString);
+  if(response.statusCode == 201){
+   //response.body ={"ID": "78", "EMAIL_ID": "test@123", "RESPONSE_CODE":"200" , "RESPONSE_MESSAGE": "Record Created Successfully"};
+    final responseString = '''{"ID": 78, "EMAIL_ID": "test@123", "RESPONSE_CODE":200 , "RESPONSE_MESSAGE": "Record Created Successfully"}''';//response.body;
+
+    Map parsedJson = json.decode(responseString);
+     if(parsedJson['RESPONSE_CODE']==200)
+       {
+        /* Navigator.push(
+            context,BouncyPageRoute(widget: Landingscreen()));
+         }
+         ));*/
+       }
+     else if(parsedJson['RESPONSE_CODE']==201)
+       {
+         //show alert dialog with Email_ID already exists
+         return showDialog(
+           builder: (context) => new AlertDialog(
+             content: new Text(EMAIL_ID_EXISTS),
+             actions: <Widget>[
+               new FlatButton(
+                   child: Text("ok",style: TextStyle(fontSize: 20)),
+                   onPressed: () {
+                     Navigator.pop(context);
+                   }
+               ),
+             ],
+           ),
+         );
+       }
+
+    int User_ID = parsedJson['ID'];
+    print(User_ID);
+    print(parsedJson);
+    //return  //userModelFromJson(responseString);
   }else{
-    throw Exception('Failed to register');
+    return showDialog(
+       // context: context,
+        builder: (context) => new AlertDialog(
+      content: new Text(SERVER_ERROR),
+      actions: <Widget>[
+        new FlatButton(
+            child: Text("ok",style: TextStyle(fontSize: 20)),
+            onPressed: () {
+              Navigator.pop(context);
+            }
+        ),
+      ],
+    ),
+    );
   }
 }
 
@@ -47,6 +103,7 @@ class _SignupPageState extends State<SignupPage> {
   final scaffoldKey = new GlobalKey<ScaffoldState>();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Geolocator geolocator = Geolocator()..forceAndroidLocationManager;
+  final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
   UserModel _user;
 
@@ -55,28 +112,75 @@ class _SignupPageState extends State<SignupPage> {
   Position _currentPosition;
   String _currentAddress;
 
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation();
-  }
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  String result = '';
 
+
+  var _connectionStatus = 'Unknown';
+  Connectivity connectivity;
+  StreamSubscription<ConnectivityResult> subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    connectivity = new Connectivity();
+    subscription =
+        connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+          _connectionStatus = result.toString();
+
+          print(_connectionStatus);
+          if (result == ConnectivityResult.wifi ||
+              result == ConnectivityResult.mobile) {
+            checkstatus(_connectionStatus);
+            _getCurrentLocation();
+
+          }
+          else
+          {
+            checkstatus(_connectionStatus);
+          }
+        });
+    //this.widget.presenter.counterView = this as CounterView;
+  }
+
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
+  }
+
+  /*Future<bool> _onBackPressed() {
+    return showDialog(
+      context: context,
+      builder: (context) => new AlertDialog(
+        title: new Text('Are you sure?'),
+        content: new Text('Do you want to exit an App'),
+        actions: <Widget>[
+          new GestureDetector(
+            onTap: () => Navigator.of(context).pop(false),
+            child: Text("NO"),
+          ),
+          SizedBox(height: 16),
+          new GestureDetector(
+            onTap: () => Navigator.of(context).pop(true),
+            child: Text("YES"),
+          ),
+        ],
+      ),
+    ) ??
+        false;
+  }*/
 
   @override
   Widget build(BuildContext context) {
 
-    return new/* WillPopScope(
-        onWillPop: (){
-      backbutton();
-      //return Future.value(false);
-    },
-    child: */Scaffold(
+    return /*WillPopScope(
+        onWillPop: _onBackPressed,
+    child:*/ new Scaffold(
         appBar: AppBar(
-            title: Text('Sign Up', style: TextStyle(fontSize: 25),),
+            title: Text(APPBAR_SIGNUP, style: TextStyle(fontSize: 25),),
             centerTitle: true,
             backgroundColor: Color.fromRGBO(236, 85, 156, 1)
         ),
@@ -96,7 +200,7 @@ class _SignupPageState extends State<SignupPage> {
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
                               controller: emailController,
                               decoration: InputDecoration(
-                                  labelText: 'Email *',
+                                  labelText: EMAIL,
                                   labelStyle: TextStyle(
                                       fontFamily:'Montserrat',
                                       fontWeight: FontWeight.bold,
@@ -105,7 +209,7 @@ class _SignupPageState extends State<SignupPage> {
                                   )
                               ),
                               validator: (String val) =>
-                              !val.contains('@') ? 'Invalid Email' :null,
+                              !val.contains('@') ? EMAIL_ERROR :null,
                               onSaved: (val) => _email=val,
 
                             ),
@@ -116,7 +220,7 @@ class _SignupPageState extends State<SignupPage> {
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
                               controller: passwordController,
                               decoration: InputDecoration(
-                                  labelText: 'Password *',
+                                  labelText: PASSWORD,
                                   labelStyle: TextStyle(
                                       fontFamily:'Montserrat',
                                       fontWeight: FontWeight.bold,
@@ -125,7 +229,7 @@ class _SignupPageState extends State<SignupPage> {
                                   )
                               ),
                               validator: (val)  =>
-                              val.length<6 ? 'Password too short' :null,
+                              val.length<6 ? PASSWORD_ERROR :null,
                               onSaved: (val) => _password=val,
                               obscureText: true,
                             ),
@@ -134,7 +238,7 @@ class _SignupPageState extends State<SignupPage> {
                               style:
                               TextStyle(fontSize: 22.0, color: Color.fromRGBO(100, 100, 100, 1)),
                               decoration: InputDecoration(
-                                  labelText: 'Confirm Password *',
+                                  labelText: CONFIRM_PASSWORD,
                                   labelStyle: TextStyle(
                                       fontFamily:'Montserrat',
                                       fontWeight: FontWeight.bold,
@@ -155,8 +259,8 @@ class _SignupPageState extends State<SignupPage> {
                 ),
                  SizedBox(height: 32),
 
-                  _user == null ? Container() :
-                  Text("The user ${_user.email},is created successfully"),
+              //    _user == null ? Container() :
+               //   Text("The user ${_user.email},is created successfully"),
 
 
                 SizedBox(height: 40.0),
@@ -174,16 +278,15 @@ class _SignupPageState extends State<SignupPage> {
                           return;
                         }
                         _formKey.currentState.save();
+                        result == 'ConnectivityResult.none' ? internet.showLoadingDialog(context, _keyLoader) :
+                        createUser(emailController.text, passwordController.text);
 
-                final String email = emailController.text;
-                final String password = passwordController.text;
-
-                final UserModel user = await createUser(email, password);//_currentPosition.latitude,
+                //final UserModel user = await createUser(email, password);//_currentPosition.latitude,
                                                         //_currentPosition.longitude,_currentAddress);
 
-                setState(() {
-                  _user = user;
-                });
+             //   setState(() {
+             //     _user = user;
+             //   });
 
 
                         //Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -191,7 +294,7 @@ class _SignupPageState extends State<SignupPage> {
                       },
                       child: Center(
                         child: Text(
-                          'Sign Up',
+                          SIGNUP_BUTTON,
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -212,6 +315,78 @@ class _SignupPageState extends State<SignupPage> {
 
     );
 
+  }
+
+
+  Future<UserModel> createUser(String email, String password) async{
+    //double Latitude,double Longitude,String Address
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    Dialogs.showLoadingDialog(context, _keyLoader);
+
+    final String apiUrl = "https://reqres.in/api/users";
+
+    //Map<String,String> headers = {'Content-Type':'application/json','Authorization': Token};
+    final msg = jsonEncode({"email":email,"password":password
+      //"Latitude": Latitude,"Longitude" : Longitude,"Address" : Address
+    });
+
+    final response = await http.post(apiUrl,
+      //  headers: headers,// <String, String>{
+      //'Content-Type': 'application/json, charset=UTF-8'
+      //},
+      body: msg,
+    );
+
+
+    if(response.statusCode == 201){
+      //response.body ={"ID": "78", "EMAIL_ID": "test@123", "RESPONSE_CODE":"200" , "RESPONSE_MESSAGE": "Record Created Successfully"};
+      final responseString = '''{"ID": 78, "EMAIL_ID": "test@123", "RESPONSE_CODE":200 , "RESPONSE_MESSAGE": "Record Created Successfully"}''';//response.body;
+
+      Map parsedJson = json.decode(responseString);
+
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      if(parsedJson['RESPONSE_CODE']==200)
+      {
+        sharedPreferences.setString('email', email);
+        sharedPreferences.setString('User_ID', parsedJson['ID']);
+
+        Navigator.push(
+            context,BouncyPageRoute(widget: Landingscreen()));
+
+      }
+      else if(parsedJson['RESPONSE_CODE']==201)
+      {
+        //show alert dialog with Email_ID already exists
+        return showDialog(
+          builder: (context) => new AlertDialog(
+            content: new Text(parsedJson['RESPONSE_MESSAGE']),
+            actions: <Widget>[
+              new FlatButton(
+                  child: Text("ok",style: TextStyle(fontSize: 20)),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }
+              ),
+            ],
+          ),
+        );
+      }
+
+      int User_ID = parsedJson['ID'];
+      print(User_ID);
+      print(parsedJson);
+      //return  //userModelFromJson(responseString);
+    }else{
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      error_response_statuscode.showLoadingDialog(context, _keyLoader);
+    }
+  }
+
+
+  void checkstatus(String resultval) {
+    setState(() {
+      result = resultval;
+    });
   }
 
   _getCurrentLocation() {

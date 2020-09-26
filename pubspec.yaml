@@ -39,8 +39,14 @@ dependencies:
 dev_dependencies:
   image_picker: ^0.6.7
   photo_manager: ^0.5.8
+  flutter_launcher_icons: "^0.8.0"
   flutter_test:
     sdk: flutter
+
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "Images/AppIcon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -55,6 +61,7 @@ flutter:
   assets:
       - Images/Logo_easymedico.png
       - Images/Default_image.jpg
+      - Images/arrow.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

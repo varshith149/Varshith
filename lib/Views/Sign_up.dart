@@ -8,7 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:convert';
 import 'package:flutter_app_1/util/constant.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:flutter_app_1/Views/Static.dart';
+import 'package:flutter_app_1/util/Utilfile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Prescription_view.dart';
@@ -115,9 +115,9 @@ class _SignupPageState extends State<SignupPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  String result = '';
+ // String result = '';
 
-
+/*
   var _connectionStatus = 'Unknown';
   Connectivity connectivity;
   StreamSubscription<ConnectivityResult> subscription;
@@ -144,14 +144,14 @@ class _SignupPageState extends State<SignupPage> {
         });
     //this.widget.presenter.counterView = this as CounterView;
   }
-
+*/
   @override
   void dispose() {
-    subscription.cancel();
+  //  subscription.cancel();
     super.dispose();
   }
 
-  /*Future<bool> _onBackPressed() {
+  Future<bool> _onBackPressed() {
     return showDialog(
       context: context,
       builder: (context) => new AlertDialog(
@@ -171,14 +171,14 @@ class _SignupPageState extends State<SignupPage> {
       ),
     ) ??
         false;
-  }*/
+  }
 
   @override
   Widget build(BuildContext context) {
 
     return /*WillPopScope(
         onWillPop: _onBackPressed,
-    child:*/ new Scaffold(
+    child: */ new Scaffold(
         appBar: AppBar(
             title: Text(APPBAR_SIGNUP, style: TextStyle(fontSize: 25),),
             centerTitle: true,
@@ -278,7 +278,8 @@ class _SignupPageState extends State<SignupPage> {
                           return;
                         }
                         _formKey.currentState.save();
-                        result == 'ConnectivityResult.none' ? internet.showLoadingDialog(context, _keyLoader) :
+                        String result = checkConnectivity1();
+                        result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
                         createUser(emailController.text, passwordController.text);
 
                 //final UserModel user = await createUser(email, password);//_currentPosition.latitude,
@@ -322,72 +323,64 @@ class _SignupPageState extends State<SignupPage> {
     //double Latitude,double Longitude,String Address
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     Dialogs.showLoadingDialog(context, _keyLoader);
-
+    final String deviceID = sharedPreferences.getString('Device_ID');
     final String apiUrl = "https://reqres.in/api/users";
 
     //Map<String,String> headers = {'Content-Type':'application/json','Authorization': Token};
     final msg = jsonEncode({"email":email,"password":password
       //"Latitude": Latitude,"Longitude" : Longitude,"Address" : Address
     });
+    try {
+      final response = await http.post(apiUrl,
+        //  headers: headers,// <String, String>{
+        //'Content-Type': 'application/json, charset=UTF-8'
+        //},
+        body: msg,
+      ).timeout(const Duration(seconds: 10));
 
-    final response = await http.post(apiUrl,
-      //  headers: headers,// <String, String>{
-      //'Content-Type': 'application/json, charset=UTF-8'
-      //},
-      body: msg,
-    );
 
+      if (response.statusCode == 201) {
+        //response.body ={"ID": "78", "EMAIL_ID": "test@123", "RESPONSE_CODE":"200" , "RESPONSE_MESSAGE": "Record Created Successfully"};
+        final responseString = '''{"ID": 78, "EMAIL_ID": "test@123", "RESPONSE_CODE":200 , "RESPONSE_MESSAGE": "Record Created Successfully"}'''; //response.body;
 
-    if(response.statusCode == 201){
-      //response.body ={"ID": "78", "EMAIL_ID": "test@123", "RESPONSE_CODE":"200" , "RESPONSE_MESSAGE": "Record Created Successfully"};
-      final responseString = '''{"ID": 78, "EMAIL_ID": "test@123", "RESPONSE_CODE":200 , "RESPONSE_MESSAGE": "Record Created Successfully"}''';//response.body;
+        Map parsedJson = json.decode(responseString);
 
-      Map parsedJson = json.decode(responseString);
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+        if (parsedJson['RESPONSE_CODE'] == 200) {
+          sharedPreferences.setString('email', email);
+          //sharedPreferences.setString('User_ID', parsedJson['ID']);
 
-      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-      if(parsedJson['RESPONSE_CODE']==200)
-      {
-        sharedPreferences.setString('email', email);
-        sharedPreferences.setString('User_ID', parsedJson['ID']);
+          Navigator.push(
+              context, BouncyPageRoute(widget: Landingscreen()));
+        }
+        else if (parsedJson['RESPONSE_CODE'] == 201) {
+          //show alert dialog with Email_ID already exists
+          Dialogs.showGeneralDialog(context, _keyLoader,parsedJson['RESPONSE_MESSAGE']);
+        }
 
-        Navigator.push(
-            context,BouncyPageRoute(widget: Landingscreen()));
-
+        int User_ID = parsedJson['ID'];
+        print(User_ID);
+        print(parsedJson);
+        //return  //userModelFromJson(responseString);
+      } else {
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+        Dialogs.showGeneralDialog(
+            context, _keyLoader, SERVER_ERROR);
       }
-      else if(parsedJson['RESPONSE_CODE']==201)
-      {
-        //show alert dialog with Email_ID already exists
-        return showDialog(
-          builder: (context) => new AlertDialog(
-            content: new Text(parsedJson['RESPONSE_MESSAGE']),
-            actions: <Widget>[
-              new FlatButton(
-                  child: Text("ok",style: TextStyle(fontSize: 20)),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }
-              ),
-            ],
-          ),
-        );
-      }
-
-      int User_ID = parsedJson['ID'];
-      print(User_ID);
-      print(parsedJson);
-      //return  //userModelFromJson(responseString);
-    }else{
+    } on TimeoutException catch (_) {
+      print('timeout');
       Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-      error_response_statuscode.showLoadingDialog(context, _keyLoader);
+      Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
     }
   }
+    
 
 
-  void checkstatus(String resultval) {
+ /* void checkstatus(String resultval) {
     setState(() {
       result = resultval;
     });
-  }
+  }*/
 
   _getCurrentLocation() {
     geolocator

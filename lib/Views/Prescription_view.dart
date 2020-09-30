@@ -10,7 +10,8 @@ import 'package:flutter_app_1/util/constant.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:flutter_app_1/Views/Static.dart';
+import 'package:flutter_app_1/util/Utilfile.dart';
+import 'package:intl/intl.dart';
 //import 'package:flutter_app/Views/View_images.dart';
 
 class Landingscreen extends StatefulWidget {
@@ -19,8 +20,6 @@ class Landingscreen extends StatefulWidget {
 }
 
 class _prescription extends State<Landingscreen> {
-  final String phpEndPoint = 'http://192.168.43.171/phpAPI/image.php';
-  final String nodeEndPoint = 'http://192.168.43.171:3000/image';
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
 
@@ -125,18 +124,19 @@ class _prescription extends State<Landingscreen> {
       return Image.asset('Images/Default_image.jpg',width: 300,height: 400);
     }
     else{
-      String base64Image = base64Encode(imagefile.readAsBytesSync());
-      Uint8List image = base64Decode(base64Image);
+     // String base64Image = base64Encode(imagefile.readAsBytesSync());
+     // Uint8List image = base64Decode(base64Image);
 
 
-      return Image.memory(image);//Image.file(image,width: 500,height: 500,);
+      //return Image.memory(image);
+      return Image.file(imagefile,width: 500,height: 500,);
     }
   }
   //String fileName = imagefile.path.split("/").last;
 
-  String result = '';
+  //String result = '';
 
-
+/*
   var _connectionStatus = 'Unknown';
   Connectivity connectivity;
   StreamSubscription<ConnectivityResult> subscription;
@@ -162,10 +162,10 @@ class _prescription extends State<Landingscreen> {
         });
     //this.widget.presenter.counterView = this as CounterView;
   }
-
+*/
   @override
   void dispose() {
-    subscription.cancel();
+  //  subscription.cancel();
     super.dispose();
   }
 
@@ -181,13 +181,18 @@ class _prescription extends State<Landingscreen> {
             actions: <Widget>[
               PopupMenuButton(
                   onSelected: (String val){
-                    result == 'ConnectivityResult.none' ? internet.showLoadingDialog(context, _keyLoader) :
+                    String result = checkConnectivity1();
+                    result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
                     logout_check();
-
                   },
                   itemBuilder: (BuildContext context) => _pop
               )
             ],
+            leading: new IconButton(
+              icon: new
+              Icon(Icons.arrow_back),
+              onPressed: () => exit(0),
+            ),
           ),
           body: Container(
             child: Center(
@@ -240,7 +245,9 @@ class _prescription extends State<Landingscreen> {
                               elevation: 7.0,
                               child: InkWell(
                                   onTap: () {
-                                  //  upload_image;
+                                    String result = checkConnectivity1();
+                                    result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
+                                Upload(imagefile);
                                     },
                                   child: Center(
                                     child: Text(UPLOAD_BUTTON,
@@ -280,10 +287,11 @@ class _prescription extends State<Landingscreen> {
    final msg = jsonEncode({"email": ID, "password": deviceID});
 
    var jsonResponse = null;
+   try {
    var response = await http.post("https://reqres.in/api/login",
      headers: headers,
      body: msg,
-   );
+   ).timeout(const Duration(seconds: 10));
    print(response.statusCode);
    if (response.statusCode == 400) {
      Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
@@ -298,35 +306,87 @@ class _prescription extends State<Landingscreen> {
          context, BouncyPageRoute(widget: MyAp()));
      //}
 
-     /*else {
-        return showDialog(
-          // context: context,
-          builder: (context) =>
-          new AlertDialog(
-            content: new Text('try again'),
-            actions: <Widget>[
-              new FlatButton(
-                  child: Text("ok", style: TextStyle(fontSize: 20)),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }
-              ),
-            ],
-          ),
-        );
-      }*/
-   }
+    /*else {
+     error_response_statuscode.showGeneralDialog(
+         context, _keyLoader, 'try Again');
+     }*/
+  }
    else {
      Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-     error_response_statuscode.showLoadingDialog(context, _keyLoader);
+     Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
+   }
+ } on TimeoutException catch (_) {
+   print('timeout');
+   Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+   Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
    }
  }
+
+
+  Future<void> Upload(imagefile) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    final String ID = sharedPreferences.getString('User_ID');
+    final String deviceID = sharedPreferences.getString('device_ID');
+    String filename = imagefile.path.split('/').last;
+    print(filename);
+    String base64Image = base64Encode(imagefile.readAsBytesSync());
+    final DateTime now = DateTime.now();
+    print(now);
+    final DateFormat formatter = DateFormat('dd-MM-yyyy');
+    final String formatted = formatter.format(now);
+    String time = "${now.hour}:${now.minute}:${now.second}";
+  print(formatted);
+  print(time);
+    Dialogs.showLoadingDialog(context, _keyLoader);
+
+    Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
+    final msg = jsonEncode({"ID":ID,"device_ID":deviceID,"Image_Name":filename,
+                        "Image_Base64":base64Image,"date":formatted,"Time":time});
+
+    var jsonResponse = null;
+    try {
+      var response = await http.post("https://reqres.in/api/login",
+        headers: headers,
+        body:msg,
+      ).timeout(const Duration(seconds: 10));
+
+
+      if(response.statusCode == 200) {
+        jsonResponse = json.decode(response.body);
+        Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+        // if(jsonResponse['RESPONSE_CODE']==200) {
+        Dialogs.showGeneralDialog(context, _keyLoader,jsonResponse['RESPONSE_MESSAGE']);
+
+
+          /*  else if(jsonResponse['RESPONSE_CODE']==202){
+       Dialogs.showGeneralDialog(context, _keyLoader,jsonResponse['RESPONSE_MESSAGE']);
+        }
+         else{
+         Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
+        }*/
+
+      }
+      else {
+        Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+        Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
+
+        print(response.body);
+      }
+    } on TimeoutException catch (_) {
+      print('timeout');
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
+    }
+  }
+
+
+  /*
 
   void checkstatus(String resultval) {
     setState(() {
       result = resultval;
     });
-  }
+  }*/
 }
 
 

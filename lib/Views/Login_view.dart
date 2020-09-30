@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_1/Views/Static.dart';
-//import 'package:flutter_app/presenter/Medical_presenter.dart';
-//import 'package:flutter_app/viewmodel/Login_model.dart';
+import 'package:flutter_app_1/util/Utilfile.dart';
+//import 'package:flutter_app/Model/Login_model.dart';
 import 'package:flutter_app_1/Views/Prescription_view.dart';
 import 'package:flutter_app_1/Views/Sign_up.dart';
 //import 'package:flutter_app/views/View_random.dart';
@@ -59,13 +59,13 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
 
   String deviceID;
-  String result = '';
+ // String result = '';
   bool toggleValue = false;
   bool _isLoading = false;
 
   //CounterViewModel _viewModel;
 
-  var _connectionStatus = 'Unknown';
+ /* var _connectionStatus = 'Unknown';
   Connectivity connectivity;
   StreamSubscription<ConnectivityResult> subscription;
 
@@ -90,11 +90,11 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
       }
     });
     //this.widget.presenter.counterView = this as CounterView;
-  }
+  }*/
 
   @override
     void dispose() {
-      subscription.cancel();
+     // subscription.cancel();
       super.dispose();
     }
 
@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   final TextEditingController emailController = new TextEditingController();
   final TextEditingController passwordController = new TextEditingController();
 
-  Future<bool> _onBackPressed() {
+ /* Future<bool> _onBackPressed() {
     if (_email != null) {
       return showDialog(
         context: context,
@@ -128,11 +128,10 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
           false;
     }
   }
-
+*/
 
   @override
   Widget build(BuildContext context) {
-    device();
     return /*WillPopScope(
       onWillPop: _onBackPressed, //_onBackPressed,//()  {
         //return _onBackPressed();
@@ -144,6 +143,11 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
       appBar: AppBar(
           title: Text(APPBAR_SIGNIN,//widget.title,
               style: TextStyle(fontSize: 25)
+          ),
+          leading: new IconButton(
+              icon: new
+              Icon(Icons.arrow_back),
+              onPressed: () => exit(0),
           ),
           centerTitle: true,
           backgroundColor: Color.fromRGBO(236, 85, 156, 1)
@@ -243,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 
                           ]
                       ),
-                      onWillPop: _onBackPressed,
+                   //   onWillPop: _onBackPressed,
                   )
               ),
 
@@ -321,13 +325,13 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
                           _isLoading = true;
                         });
                         //  circle();
-                        result == 'ConnectivityResult.none' ? internet.showLoadingDialog(context, _keyLoader) :
+                        String result = checkConnectivity1();
+                        result == 'None' ?   Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
                         SignIn(emailController.text, passwordController.text,/*_currentPosition.latitude,_currentPosition.longitude,_currentAddress*/);
                         print(_currentPosition);
                         //print(_currentPosition.longitude);
                         print(_currentAddress);
                         print('$deviceID');
-                        //this.widget.presenter.onButton1Clicked();
                         //Navigator.push(context, MaterialPageRoute(builder: (context) {
                         //return pass();
                       },
@@ -407,17 +411,10 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
   }
 
 
-  Future<void> device() async {
-    SharedPreferences shared = await SharedPreferences.getInstance();
-    final String deviceID = shared.getString('device');
-    //print(deviceID);
-  }
 
-
-
-
-    Future<void> SignIn( email, pass,/*Latitude,Longitude,Address,device_id*/) async {
+  Future<void> SignIn( email, pass,/*Latitude,Longitude,Address,device_id*/) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    final String deviceID = sharedPreferences.getString('Device_ID');
 
     Dialogs.showLoadingDialog(context, _keyLoader);
 
@@ -426,77 +423,47 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
     //'latitude': Latitude,'longitude': Longitude,'Address' : Address,'device_id': device_id
 
     var jsonResponse = null;
-    var response = await http.post("https://reqres.in/api/login",
+    try {
+       var response = await http.post("https://reqres.in/api/login",
       headers: headers,
       body:msg,
-    );
+      ).timeout(const Duration(seconds: 10));
 
+
+
+  print(response.statusCode);
     if(response.statusCode == 200) {
       jsonResponse = json.decode(response.body);
-      if(jsonResponse != null) {
-        setState(() {
-          _isLoading = false;
-        });
 
-
-        sharedPreferences.setString('Device_ID', deviceID);
 
         print("Toggle button from login view");
         print(toggleValue) ;
         Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-     //   if(jsonResponse['RESPONSE_CODE']==200) {
+       // if(jsonResponse['RESPONSE_CODE']==200) {
         sharedPreferences.setBool("Islogin", toggleValue);
         sharedPreferences.setString('email', email);
         sharedPreferences.setString('User_ID', jsonResponse['ID']);
 
         Navigator.push(
             context,BouncyPageRoute(widget: Landingscreen()));
-          /*Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(
-              builder: (BuildContext context) => Landingscreen()), (
-              Route<dynamic> route) => false);*/
-          // }
-     /*    else if(jsonResponse['RESPONSE_CODE']==202){
-          return showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              content: new Text(jsonResponse['RESPONSE_MESSAGE']),
-              actions: <Widget>[
-                new FlatButton(
-                    child: Text("ok",style: TextStyle(fontSize: 20)),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }
-                ),
-              ],
-            ),
-          );
+        /*   }
+         else if(jsonResponse['RESPONSE_CODE']==202){
+       Dialogs.showGeneralDialog(context, _keyLoader,jsonResponse['RESPONSE_MESSAGE']);
         }
          else{
-          return showDialog(
-            context: context,
-            builder: (context) => new AlertDialog(
-              content: new Text(jsonResponse['RESPONSE_MESSAGE']),
-              actions: <Widget>[
-                new FlatButton(
-                    child: Text("ok",style: TextStyle(fontSize: 20)),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    }
-                ),
-              ],
-            ),
-          );
+         Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
         }*/
-        }
     }
     else {
       Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-      error_response_statuscode.showLoadingDialog(context, _keyLoader);
+      Dialogs.showGeneralDialog(context, _keyLoader,USER_NOT_FOUND);
 
-      /*setState(() {
-        _isLoading = false;
-      });*/
       print(response.body);
+    }
+    } on TimeoutException catch (_) {
+      print('timeout');
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
     }
   }
 
@@ -519,11 +486,6 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
         );
   }                      */
 
-Future<void> Network_error(BuildContext context)  {
-
-      internet.showLoadingDialog(context, _keyLoader);
-
-}
 
 
 
@@ -533,11 +495,11 @@ togglebutton() {
     });
   }
 
-  void checkstatus(String resultval) {
+/*  void checkstatus(String resultval) {
       setState(() {
         result = resultval;
       });
-    }
+    }*/
 
 
   _getCurrentLocation() {

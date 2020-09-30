@@ -15,14 +15,14 @@ const UPLOAD_BUTTON = 'Submit';
 const APPBAR_SIGNIN = 'Sign In';
 const EMAIL = 'Email *';
 const PASSWORD = 'Password *';
-const FORGET_PASSWORD = 'Forget Password';
+const FORGET_PASSWORD = 'Forgot Password';
 const REMEMBER_ME = 'Remember Me ';
 const LOGIN_BUTTON = 'Login';
 const REGISTER = 'Register';
 const DONT_HAVE_ACCOUNT = "Don't have account?";
 
 // const use on forget password
-const APPBAR_FORGET_PASSWORD = 'Forget Password';
+const APPBAR_FORGET_PASSWORD = 'Forgot Password';
 const SUBMIT_BUTTON = 'Submit';
 
 // const use on signup page
@@ -40,4 +40,7 @@ const Token = 'bb4f41e481fa6da10f666afa9d329708ba996a6d';
 
 //Server Error
 const SERVER_ERROR = 'Server Error. Please Try Later.';
+const CONNECTION_TIMEOUT = 'Server is taking time to respond. Please try later.';
 const EMAIL_ID_EXISTS = 'Account Exists with this Email_ID';
+const CHECK_EMAIL ='Your password has been reset. Please check your email.';
+const USER_NOT_FOUND = "User doesn't exist";

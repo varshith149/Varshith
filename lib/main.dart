@@ -1,37 +1,13 @@
-/*
-import 'package:flutter/material.dart';
-import 'package:flutter_app/presenter/Medical_presenter.dart';
-import 'package:flutter_app/views/Login_view.dart';
-import 'dart:async';
-
-
-void main() => runApp(new MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Easy Medico',
-      theme: new ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: new MyHomePage(new BasicCounterPresenter(), title: 'login Page'),
-    );
-  }
-}
-*/
-
 //multi_image_picker: ^3.0.14
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_1/Views/Login_view.dart';
 import 'package:flutter_app_1/Views/Prescription_view.dart';
 import 'package:splashscreen/splashscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-//import 'package:flutter_app/views/Login_view.dart';
-//import 'dart:async';
+import 'dart:async';
 import 'package:device_id/device_id.dart';
+import 'package:connectivity/connectivity.dart';
 
 
 void main() => runApp(new MyApp());
@@ -48,8 +24,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -96,12 +70,31 @@ class _MyHomePageState extends State<MyHomePage> {
 bool togg;
 String deviceID;
 String User_loggedIn;
+String result ='';
+var _connectionStatus = 'Unknown';
+Connectivity connectivity;
+StreamSubscription<ConnectivityResult> subscription;
 
 
 @override
 void initState() {
   super.initState();
   Rememberme(togg);
+  connectivity = new Connectivity();
+  subscription =
+      connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
+        _connectionStatus = result.toString();
+
+        print(_connectionStatus);
+        if (result == ConnectivityResult.wifi ||
+            result == ConnectivityResult.mobile) {
+          checkstatus(_connectionStatus);
+        }
+        else
+        {
+          checkstatus(_connectionStatus);
+        }
+      });
 }
 
 
@@ -114,7 +107,7 @@ void getDeviceID() async {
 
 Rememberme(bool togg) async {
   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-
+  sharedPreferences.setString("Device_ID", deviceID);
   final bool toggleValue = sharedPreferences.getBool('Islogin');
   print("toggle value from main dart");
   print(toggleValue);
@@ -134,10 +127,10 @@ Rememberme(bool togg) async {
 
 device() async {
   SharedPreferences shared = await SharedPreferences.getInstance();
-  shared.setString("device", deviceID);
+  shared.setString("Internet_Result", result);
 }
 
-Future<bool> _onBackPressed() {
+/*Future<bool> _onBackPressed() {
   //Navigator.of(context).pop();
   return showDialog(
     context: context,
@@ -158,18 +151,16 @@ Future<bool> _onBackPressed() {
   ) ??
       false;
 }
-
+*/
 
 
 
   @override
   Widget build(BuildContext context) {
     getDeviceID();
-    device();
+   // device();
     //Rememberme(togg);
-    return WillPopScope(
-        onWillPop: _onBackPressed,
-      child: SplashScreen(
+    return SplashScreen(
       seconds: 5,
       backgroundColor: Colors.white,
 
@@ -184,9 +175,16 @@ Future<bool> _onBackPressed() {
             color: Colors.green
         ),
       ),
-    )
     );
-  }}
+  }
+
+
+  void checkstatus(String resultval) {
+    setState(() {
+      result = resultval;
+    });
+  }
+}
 
 
 

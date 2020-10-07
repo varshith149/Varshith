@@ -4,15 +4,14 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_1/Views/Login_view.dart';
+import 'package:flutter_app2/Views/Login_view.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_app_1/util/constant.dart';
+import 'package:flutter_app2/util/Constant.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity/connectivity.dart';
-import 'package:flutter_app_1/util/Utilfile.dart';
+import 'package:flutter_app2/util/Util_file.dart';
 import 'package:intl/intl.dart';
-//import 'package:flutter_app/Views/View_images.dart';
 
 class Landingscreen extends StatefulWidget {
   @override
@@ -124,20 +123,20 @@ class _prescription extends State<Landingscreen> {
       return Image.asset('Images/Default_image.jpg',width: 300,height: 400);
     }
     else{
-     // String base64Image = base64Encode(imagefile.readAsBytesSync());
-     // Uint8List image = base64Decode(base64Image);
+      // String base64Image = base64Encode(imagefile.readAsBytesSync());
+      // Uint8List image = base64Decode(base64Image);
 
 
       //return Image.memory(image);
-      return Image.file(imagefile,width: 500,height: 500,);
+      return Image.file(imagefile,width: 400,height: 400,);
     }
   }
   //String fileName = imagefile.path.split("/").last;
 
-  //String result = '';
+  String result = '';
 
-/*
-  var _connectionStatus = 'Unknown';
+
+ /* var _connectionStatus = 'Unknown';
   Connectivity connectivity;
   StreamSubscription<ConnectivityResult> subscription;
 
@@ -161,47 +160,57 @@ class _prescription extends State<Landingscreen> {
           }
         });
     //this.widget.presenter.counterView = this as CounterView;
-  }
-*/
+  }*/
+
   @override
   void dispose() {
-  //  subscription.cancel();
+    //subscription.cancel();
     super.dispose();
   }
 
+  Future<bool> _onBackPressed() {
+    exit(0);
+  }
 
 
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-          appBar: AppBar(
-            title: Text(APPBAR_PRESCRIPTION,style: TextStyle(fontSize: 18),),
-            backgroundColor: Color.fromRGBO(236, 85, 156, 1),
-            actions: <Widget>[
-              PopupMenuButton(
-                  onSelected: (String val){
-                    String result = checkConnectivity1();
-                    result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
-                    logout_check();
-                  },
-                  itemBuilder: (BuildContext context) => _pop
-              )
-            ],
-            leading: new IconButton(
-              icon: new
-              Icon(Icons.arrow_back),
-              onPressed: () => exit(0),
-            ),
+    checkConnectivity1();
+    return WillPopScope(
+      onWillPop: ()async {
+        _onBackPressed();
+        return true;
+      },
+      child: new Scaffold(
+        appBar: AppBar(
+          title: Text(APPBAR_PRESCRIPTION,style: TextStyle(fontSize: 18),),
+          backgroundColor: Color.fromRGBO(236, 85, 156, 1),
+          actions: <Widget>[
+            PopupMenuButton(
+                onSelected: (String val){
+                  //String result = checkConnectivity1();
+                  result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
+                  logout_check();
+                },
+                itemBuilder: (BuildContext context) => _pop
+            )
+          ],
+          leading: new IconButton(
+            icon: new
+            Icon(Icons.arrow_back),
+            onPressed: () => exit(0),
           ),
-          body: Container(
+        ),
+        body: SingleChildScrollView(
+          child: Container(
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   SizedBox(height: 10),
                   _decideImageView(),
-                  SizedBox(height: 25),
+                  SizedBox(height: 10),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -238,17 +247,17 @@ class _prescription extends State<Landingscreen> {
                           child: Container(
                             //alignment: Alignment.center,
                             height: 40,
-                            width: 150,
+                            width: 140,
                             child: Material(
                               borderRadius: BorderRadius.circular(0.0),
                               color: Color.fromRGBO(4, 154, 232, 1),
                               elevation: 7.0,
                               child: InkWell(
                                   onTap: () {
-                                    String result = checkConnectivity1();
+                                   // String result = checkConnectivity1();
                                     result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
-                                Upload(imagefile);
-                                    },
+                                    Upload(imagefile);
+                                  },
                                   child: Center(
                                     child: Text(UPLOAD_BUTTON,
                                       style: TextStyle(
@@ -268,59 +277,62 @@ class _prescription extends State<Landingscreen> {
               ),
             ),
           ),
+        ),
 
+      ),
     );
   }
 
- Future<void> logout_check() async {
-   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-   Dialogs.showLoadingDialog(context, _keyLoader);
+  Future<void> logout_check() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    Dialogs.showLoadingDialog(context, _keyLoader);
 
-   final String ID = sharedPreferences.getString('User_ID');
-   final String deviceID = sharedPreferences.getString('Device_ID');
-   bool toggleValue = sharedPreferences.getBool('Islogin');
+    final int ID = sharedPreferences.getInt('USER_ID');
+    final String email = sharedPreferences.getString('EMAIL_ID');
+    final String deviceID = sharedPreferences.getString('DEVICE_ID');
+    bool toggleValue = sharedPreferences.getBool('Islogin');
+print(ID);
+    Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      'Authorization': Token
+    };
+    final msg = jsonEncode({"id": ID,"EMAIL_ID": email ,"DEVICE_ID": deviceID});
 
-   Map<String, String> headers = {
-     'Content-Type': 'application/json',
-     'authorization': 'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='
-   };
-   final msg = jsonEncode({"email": ID, "password": deviceID});
+    var jsonResponse = null;
+    try {
+      var response = await http.post(URL +'Logout/',
+        headers: headers,
+        body: msg,
+      ).timeout(const Duration(seconds: 10));
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
 
-   var jsonResponse = null;
-   try {
-   var response = await http.post("https://reqres.in/api/login",
-     headers: headers,
-     body: msg,
-   ).timeout(const Duration(seconds: 10));
-   print(response.statusCode);
-   if (response.statusCode == 400) {
-     Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+        jsonResponse = json.decode(response.body);
+        if(jsonResponse['RESPONSE_CODE']==200) {
+        toggleValue = false; //!toggleValue;
+        print(toggleValue);
+        sharedPreferences.setBool("Islogin", toggleValue);
 
-     jsonResponse = json.decode(response.body);
-     // if(jsonResponse['RESPONSE_CODE']==200) {
-     toggleValue = false; //!toggleValue;
-     print(toggleValue);
-     sharedPreferences.setBool("Islogin", toggleValue);
+        Navigator.push(
+            context, BouncyPageRoute(widget: MyAp()));
+        }
 
-     Navigator.push(
-         context, BouncyPageRoute(widget: MyAp()));
-     //}
-
-    /*else {
-     error_response_statuscode.showGeneralDialog(
-         context, _keyLoader, 'try Again');
-     }*/
+        else {
+        Dialogs.showGeneralDialog(
+               context, _keyLoader, SERVER_ERROR);
+        }
+      }
+      else {
+        Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
+        Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
+      }
+    } on TimeoutException catch (_) {
+      //print('timeout');
+      Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
+      Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
+    }
   }
-   else {
-     Navigator.of(_keyLoader.currentContext, rootNavigator: true).pop();
-     Dialogs.showGeneralDialog(context, _keyLoader,SERVER_ERROR);
-   }
- } on TimeoutException catch (_) {
-   print('timeout');
-   Navigator.of(_keyLoader.currentContext,rootNavigator: true).pop();
-   Dialogs.showGeneralDialog(context, _keyLoader,CONNECTION_TIMEOUT);
-   }
- }
 
 
   Future<void> Upload(imagefile) async {
@@ -335,13 +347,13 @@ class _prescription extends State<Landingscreen> {
     final DateFormat formatter = DateFormat('dd-MM-yyyy');
     final String formatted = formatter.format(now);
     String time = "${now.hour}:${now.minute}:${now.second}";
-  print(formatted);
-  print(time);
+    print(formatted);
+    print(time);
     Dialogs.showLoadingDialog(context, _keyLoader);
 
     Map<String,String> headers = {'Content-Type':'application/json','authorization':'Basic c3R1ZHlkb3RlOnN0dWR5ZG90ZTEyMw=='};
     final msg = jsonEncode({"ID":ID,"device_ID":deviceID,"Image_Name":filename,
-                        "Image_Base64":base64Image,"date":formatted,"Time":time});
+      "Image_Base64":base64Image,"date":formatted,"Time":time});
 
     var jsonResponse = null;
     try {
@@ -358,7 +370,7 @@ class _prescription extends State<Landingscreen> {
         Dialogs.showGeneralDialog(context, _keyLoader,jsonResponse['RESPONSE_MESSAGE']);
 
 
-          /*  else if(jsonResponse['RESPONSE_CODE']==202){
+        /*  else if(jsonResponse['RESPONSE_CODE']==202){
        Dialogs.showGeneralDialog(context, _keyLoader,jsonResponse['RESPONSE_MESSAGE']);
         }
          else{
@@ -379,8 +391,37 @@ class _prescription extends State<Landingscreen> {
     }
   }
 
+  Connectivity connectivity = Connectivity();
 
-  /*
+  void checkConnectivity1() async {
+    var connectivityResult = await connectivity.checkConnectivity();
+    var conn = getConnectionValue(connectivityResult);
+    setState(() {
+      result =  conn;
+      //  print(result);
+    });
+  }
+
+// Method to convert the connectivity to a string value
+  String getConnectionValue(var connectivityResult) {
+    String status = '';
+    switch (connectivityResult) {
+      case ConnectivityResult.mobile:
+        status = 'Mobile';
+        break;
+      case ConnectivityResult.wifi:
+        status = 'Wi-Fi';
+        break;
+      case ConnectivityResult.none:
+        status = 'None';
+        break;
+    /* default:
+        status = 'None';
+        break;*/
+    }
+    return status;
+  }
+/*
 
   void checkstatus(String resultval) {
     setState(() {
@@ -388,6 +429,4 @@ class _prescription extends State<Landingscreen> {
     });
   }*/
 }
-
-
 

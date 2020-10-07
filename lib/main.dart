@@ -1,8 +1,8 @@
 //multi_image_picker: ^3.0.14
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_app_1/Views/Login_view.dart';
-import 'package:flutter_app_1/Views/Prescription_view.dart';
+import 'package:flutter_app2/Views/Login_view.dart';
+import 'package:flutter_app2/Views/Prescription_view.dart';
 import 'package:splashscreen/splashscreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
@@ -67,68 +67,51 @@ class _MyHomePageState extends State<MyHomePage> {
        false;
  }*/
 
-bool togg;
-String deviceID;
-String User_loggedIn;
-String result ='';
-var _connectionStatus = 'Unknown';
-Connectivity connectivity;
-StreamSubscription<ConnectivityResult> subscription;
+  bool togg;
+  String deviceID;
+  String User_loggedIn;
+  String result ='';
 
 
-@override
-void initState() {
-  super.initState();
-  Rememberme(togg);
-  connectivity = new Connectivity();
-  subscription =
-      connectivity.onConnectivityChanged.listen((ConnectivityResult result) {
-        _connectionStatus = result.toString();
 
-        print(_connectionStatus);
-        if (result == ConnectivityResult.wifi ||
-            result == ConnectivityResult.mobile) {
-          checkstatus(_connectionStatus);
-        }
-        else
-        {
-          checkstatus(_connectionStatus);
-        }
-      });
-}
+  @override
+  void initState() {
+    super.initState();
+   // Rememberme(togg);
+  }
 
 
-void getDeviceID() async {
-  String deviceId = await DeviceId.getID;
-  deviceID = '$deviceId';
-  print('Device ID is $deviceId');
-}
+  void getDeviceID() async {
+    String deviceId = await DeviceId.getID;
+    deviceID = '$deviceId';
+   // print('Device ID is $deviceId');
+  }
 
 
-Rememberme(bool togg) async {
-  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-  sharedPreferences.setString("Device_ID", deviceID);
-  final bool toggleValue = sharedPreferences.getBool('Islogin');
-  print("toggle value from main dart");
-  print(toggleValue);
-  setState(() {
-    togg = toggleValue;
-  });
-  print(togg);
+  Rememberme(bool togg) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    sharedPreferences.setString("DEVICE_ID", deviceID);
+    final bool toggleValue = sharedPreferences.getBool('Islogin');
+    //print("toggle value from main dart");
+    //print(toggleValue);
+    setState(() {
+      togg = toggleValue;
+    });
+   // print(togg);
 
-  if (togg == true ) {
-    User_loggedIn = 'Prescription Screen';
+    if (togg == true ) {
+      User_loggedIn = 'Prescription Screen';
     }
-  else {
-    User_loggedIn = 'Sign In';
+    else {
+      User_loggedIn = 'Sign In';
     }
 
-}
+  }
 
-device() async {
-  SharedPreferences shared = await SharedPreferences.getInstance();
-  shared.setString("Internet_Result", result);
-}
+ /* device() async {
+    SharedPreferences shared = await SharedPreferences.getInstance();
+    shared.setString("Internet_Result", result);
+  }*/
 
 /*Future<bool> _onBackPressed() {
   //Navigator.of(context).pop();
@@ -152,22 +135,26 @@ device() async {
       false;
 }
 */
-
+  @override
+  void dispose() {
+  //  subscription.cancel();
+    super.dispose();
+  }
 
 
   @override
   Widget build(BuildContext context) {
     getDeviceID();
-   // device();
-    //Rememberme(togg);
+    // device();
+    Rememberme(togg);
     return SplashScreen(
-      seconds: 5,
+      seconds: 2,
       backgroundColor: Colors.white,
 
       image: Image.asset('Images/Logo_easymedico.png'),
       loaderColor: Colors.white,
       photoSize: 150,
-       navigateAfterSeconds: User_loggedIn == 'Prescription Screen' ? Landingscreen() : MyAp(),
+      navigateAfterSeconds: User_loggedIn == 'Prescription Screen' ? Landingscreen() : MyAp(),
 
       loadingText: Text('Your Health Our Care..!',
         style: TextStyle(

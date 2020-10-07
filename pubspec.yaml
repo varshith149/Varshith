@@ -1,4 +1,4 @@
-name: flutter_app_1
+name: flutter_app2
 description: A new Flutter application.
 
 # The following line prevents the package from being accidentally published to
@@ -48,6 +48,9 @@ flutter_icons:
   ios: true
   image_path: "Images/AppIcon.png"
 
+
+
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
@@ -59,9 +62,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-      - Images/Logo_easymedico.png
-      - Images/Default_image.jpg
-      - Images/arrow.png
+    - Images/Logo_easymedico.png
+    - Images/Default_image.jpg
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:

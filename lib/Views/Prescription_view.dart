@@ -22,7 +22,6 @@ class _prescription extends State<Landingscreen> {
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
 
-
   static const _popItem= <String>[
     "Logout"
   ];
@@ -119,8 +118,13 @@ class _prescription extends State<Landingscreen> {
         }
       },
     );*/
+    final _height = MediaQuery.of(context).size.height-
+        MediaQuery.of(context).padding.top-
+        kToolbarHeight;
+    final width = MediaQuery.of(context).size.width;
+
     if(imagefile == null){
-      return Image.asset('Images/Default_image.jpg',width: 300,height: 400);
+      return Image.asset('Images/Default_image.jpg',width: width,height: _height*0.85);
     }
     else{
       // String base64Image = base64Encode(imagefile.readAsBytesSync());
@@ -128,7 +132,7 @@ class _prescription extends State<Landingscreen> {
 
 
       //return Image.memory(image);
-      return Image.file(imagefile,width: 400,height: 400,);
+      return Image.file(imagefile,width:width*1 ,height: _height*0.85,);
     }
   }
   //String fileName = imagefile.path.split("/").last;
@@ -177,6 +181,8 @@ class _prescription extends State<Landingscreen> {
   @override
   Widget build(BuildContext context) {
     checkConnectivity1();
+
+
     return WillPopScope(
       onWillPop: ()async {
         _onBackPressed();

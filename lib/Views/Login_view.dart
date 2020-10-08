@@ -112,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> /*implements CounterView*/ {
 bool emailvalid;
   @override
   Widget build(BuildContext context) {
-   // SizeConfig().init(context);
     checkConnectivity1();
     return WillPopScope(
         onWillPop: ()async {

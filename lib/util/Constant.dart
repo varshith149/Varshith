@@ -40,9 +40,10 @@ const URL  = 'http://125.16.82.68:3781/WebServices/';
 //Server Error
 const SERVER_ERROR = 'Server Error. Please Try Later.';
 const CONNECTION_TIMEOUT = 'Server is taking time to respond. Please try later.';
-const EMAIL_ID_EXISTS = 'Account Exists with this Email_ID';
+const EMAIL_ID_EXISTS = 'Account Exists with this EmailID.';
 const CHECK_EMAIL ='Your password has been reset. Please check your email.';
-const USER_NOT_FOUND = "User doesn't exist";
+const USER_NOT_FOUND = "User doesn't exist.";
 
 //Enable Location
-const ENABLE_LOCATION = 'To use this app please enable your location';
+const ENABLE_LOCATION = 'To use this app please enable your location.';
+const LOCATION_NOT_FOUND = 'Please check the location settings.';

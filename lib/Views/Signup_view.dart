@@ -213,19 +213,32 @@ class _SignupPageState extends State<SignupPage> {
                         _formKey.currentState.save();
                        // print(1);
                       //  _getCurrentLocation();
-                        print(2);
+
+
 
                         if(status_GPS==false)
                           {
                           Dialogs.showGeneralDialog(context, _keyLoader,ENABLE_LOCATION);
                           return ;
                         }
-
+                       /* else{
+                          _getCurrentLocation();
+                        }*/
                        // String result = checkConnectivity1();
-                        result == 'None' ? Dialogs.showGeneralDialog(context, _keyLoader,NETWORK_CONNECTION_ERROR) :
-                        createUser(emailController.text, passwordController.text,_currentPosition.latitude.toStringAsPrecision(4),
-                                  _currentPosition.longitude.toStringAsPrecision(4),_currentAddress);
-
+                        if(_currentPosition != null && _currentAddress!=null){//.latitude!=null || _currentPosition.longitude!=null) {
+                          result == 'None' ? Dialogs.showGeneralDialog(
+                              context, _keyLoader, NETWORK_CONNECTION_ERROR) :
+                          createUser(
+                              emailController.text, passwordController.text,
+                              _currentPosition.latitude.toStringAsPrecision(4),
+                              _currentPosition.longitude.toStringAsPrecision(4),
+                              _currentAddress);
+                        }
+                        else
+                          {
+                            Dialogs.showGeneralDialog(context, _keyLoader, LOCATION_NOT_FOUND);
+                            return;
+                          }
                         //final UserModel user = await createUser(email, password);//_currentPosition.latitude,
                         //_currentPosition.longitude,_currentAddress);
 
@@ -373,8 +386,37 @@ class _SignupPageState extends State<SignupPage> {
   }*/
 
   _getCurrentLocation() {
+    Geolocator().getCurrentPosition().timeout(Duration(seconds: 10)).then((
+        Position position) {
+    //getting position without problems
+    //geolocator
+      //  .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+        //.then((Position position) {
+      print(position);
+      setState(() {
+        // print('asdfgh');
+        _currentPosition = position;
+        print(_currentPosition);
+      });
+      _getAddressFromLatLng();
+
+    }).catchError((error) {
+      if (error is TimeoutException) {
+        Geolocator().getLastKnownPosition().then((position) {
+          //getting last known position
+          //print(position);
+        }).catchError((error) {
+          //handle the exception
+        });
+      } else {
+        //handle the exception
+      }
+    });
+  }
+
+
    // print(11);
-    geolocator
+    /*geolocator
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position position) {
       setState(() {
@@ -387,7 +429,7 @@ class _SignupPageState extends State<SignupPage> {
       print('abccc');
       print(e);
     });
-  }
+  }*/
 
   _check_GPS_connectivity() async{
    status_GPS = await Geolocator().isLocationServiceEnabled() ;
@@ -419,7 +461,7 @@ class _SignupPageState extends State<SignupPage> {
           _currentPosition.latitude, _currentPosition.longitude);
 
       Placemark place = p[0];
-
+  print(place);
       setState(() {
         _currentAddress =
         "${place.name},${place.subLocality},${place.locality},${place.thoroughfare},${place.subAdministrativeArea},${place.administrativeArea}, ${place.postalCode}, ${place.country}";

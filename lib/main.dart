@@ -154,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
       image: Image.asset('Images/Logo_easymedico.png'),
       loaderColor: Colors.white,
       photoSize: 150,
-      navigateAfterSeconds: User_loggedIn == 'Prescription Screen' ? Landingscreen() : MyAp(),
+      navigateAfterSeconds: User_loggedIn == 'Prescription Screen' ? Landingscreen() : Landingscreen(),
 
       loadingText: Text('Your Health Our Care..!',
         style: TextStyle(

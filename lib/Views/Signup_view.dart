@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:core';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 //import 'package:flutter_app2/Model/Model.dart';
 import 'package:flutter_app2/Views/Login_view.dart';
 import 'package:flutter_app2/Views/Prescription_view.dart';
@@ -12,7 +13,7 @@ import 'package:flutter_app2/util/Constant.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter_app2/util/Util_file.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:location/location.dart';
 
 
 class SignupPage extends StatefulWidget {
@@ -28,18 +29,69 @@ class _SignupPageState extends State<SignupPage> {
   final Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
   final GlobalKey<State> _keyLoader = new GlobalKey<State>();
 
-  //UserModel _user;
+  Location location = new Location();
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+  LocationData _locationData;
+
+
 
   String _email;
   String _password;
-  Position _currentPosition;
+ // Position _currentPosition;
   String _currentAddress;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
   String result = '';
-  bool status_GPS = false;
+ // bool status_GPS = false;
+  StreamSubscription<LocationData> subscription;
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    getlocation();
+  }
+
+  void getlocation()async{
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        await Dialogs.showGeneralDialog(context, _keyLoader,'To use this application please on your location');
+        _serviceEnabled = await location.requestService();
+          if(!_serviceEnabled){
+            return;
+          }
+      }
+    }
+/*
+    _permissionGranted = await location.hasPermission();
+    print(_permissionGranted);
+    if (_permissionGranted == PermissionStatus.denied) {
+      print(10);
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        print(11);
+        return;
+      }
+    }
+*/
+    _locationData = await location.getLocation();
+    subscription = location. onLocationChanged.listen((LocationData currentLocation) {
+      _locationData = currentLocation;
+      print(1);
+      print(_locationData);
+        _getAddressFromLatLng();
+      //print(currentLocation);
+    });
+    print(2);
+      print(_locationData);
+     // _getAddressFromLatLng();
+  }
 
 
  /* var _connectionStatus = 'Unknown';
@@ -68,7 +120,7 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   void dispose() {
-  //  subscription.cancel();
+    subscription.cancel();
     super.dispose();
   }
 
@@ -98,18 +150,16 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     checkConnectivity1();
-    _check_GPS_connectivity();
-    if(status_GPS==true)
-    {
+   // _check_GPS_connectivity();
+   // if(status_GPS==true)
+   // {
       //print(1);
-      _getCurrentLocation();
-    }
+      //_getCurrentLocation();
+   // }
 
 //_getCurrentLocation();
     //checkstatus(result);
-    return /*WillPopScope(
-        onWillPop: _onBackPressed,
-    child: */ new Scaffold(
+    return  new Scaffold(
         appBar: AppBar(
             title: Text(APPBAR_SIGNUP, style: TextStyle(fontSize: 25),),
             centerTitle: true,
@@ -216,22 +266,22 @@ class _SignupPageState extends State<SignupPage> {
 
 
 
-                        if(status_GPS==false)
+                        /*if(status_GPS==false)
                           {
                           Dialogs.showGeneralDialog(context, _keyLoader,ENABLE_LOCATION);
                           return ;
-                        }
+                        }*/
                        /* else{
                           _getCurrentLocation();
                         }*/
                        // String result = checkConnectivity1();
-                        if(_currentPosition != null && _currentAddress!=null){//.latitude!=null || _currentPosition.longitude!=null) {
+                        if(_locationData != null && _currentAddress!=null){//.latitude!=null || _currentPosition.longitude!=null) {
                           result == 'None' ? Dialogs.showGeneralDialog(
                               context, _keyLoader, NETWORK_CONNECTION_ERROR) :
                           createUser(
                               emailController.text, passwordController.text,
-                              _currentPosition.latitude.toStringAsPrecision(4),
-                              _currentPosition.longitude.toStringAsPrecision(4),
+                              _locationData.latitude.toStringAsPrecision(4),
+                              _locationData.longitude.toStringAsPrecision(4),
                               _currentAddress);
                         }
                         else
@@ -385,7 +435,7 @@ class _SignupPageState extends State<SignupPage> {
     //});
   }*/
 
-  _getCurrentLocation() {
+ /* _getCurrentLocation() {
     Geolocator().getCurrentPosition().timeout(Duration(seconds: 10)).then((
         Position position) {
     //getting position without problems
@@ -412,7 +462,7 @@ class _SignupPageState extends State<SignupPage> {
         //handle the exception
       }
     });
-  }
+  }*/
 
 
    // print(11);
@@ -432,7 +482,7 @@ class _SignupPageState extends State<SignupPage> {
   }*/
 
   _check_GPS_connectivity() async{
-   status_GPS = await Geolocator().isLocationServiceEnabled() ;
+   //status_GPS = await Geolocator().isLocationServiceEnabled() ;
   // print(status_GPS);
   /* if (status_GPS) {
      print('nice1');
@@ -458,10 +508,10 @@ class _SignupPageState extends State<SignupPage> {
   _getAddressFromLatLng() async {
     try {
       List<Placemark> p = await geolocator.placemarkFromCoordinates(
-          _currentPosition.latitude, _currentPosition.longitude);
+          _locationData.latitude, _locationData.longitude);
 
       Placemark place = p[0];
-  print(place);
+ // print(place);
       setState(() {
         _currentAddress =
         "${place.name},${place.subLocality},${place.locality},${place.thoroughfare},${place.subAdministrativeArea},${place.administrativeArea}, ${place.postalCode}, ${place.country}";

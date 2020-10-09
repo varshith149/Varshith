@@ -132,7 +132,7 @@ class _prescription extends State<Landingscreen> {
 
 
       //return Image.memory(image);
-      return Image.file(imagefile,width:width*1 ,height: _height*0.85,);
+      return Image.file(imagefile,width:width ,height: _height*0.85,);
     }
   }
   //String fileName = imagefile.path.split("/").last;
